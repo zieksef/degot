@@ -1,7 +1,8 @@
-package main
+package gen
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
 	"os"
@@ -11,14 +12,18 @@ import (
 )
 
 var (
+	//go:embed templates/gitignore
+	gitignoreTemplate string
+
 	serviceDirs = []string{
 		"api",
 		"cmd",
 		"configs",
 		"deployments",
 		"internal",
-		"internal/cfg",
 		"internal/infra",
+		"internal/infra/conf",
+		"internal/pkg",
 		"internal/repo",
 		"internal/svc",
 		"migrations",
@@ -67,7 +72,7 @@ func Generate(ctx context.Context, options Options) error {
 	}{
 		{"README.md", readmeContent(serviceName)},
 		{"AGENTS.md", ""},
-		{".gitignore", ""},
+		{".gitignore", gitignoreTemplate},
 		{filepath.Join("cmd", "main.go"), cmdMainContent()},
 	}
 	for _, f := range files {
