@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/zieksef/degot/internal/gen"
+	"github.com/zieksef/degot/internal/output"
 )
 
 func newGenCommand(generator Generator) *cobra.Command {
@@ -16,6 +17,7 @@ func newGenCommand(generator Generator) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "gen",
 		Short: "Generate service directories and base files.",
+		Args:  noArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if strings.TrimSpace(options.Service) == "" {
 				return &usageError{err: errors.New("--service is required")}
@@ -26,7 +28,7 @@ func newGenCommand(generator Generator) *cobra.Command {
 				return err
 			}
 
-			_, _ = fmt.Fprintf(cmd.OutOrStdout(), "created %s\n", options.Service)
+			_, _ = fmt.Fprint(cmd.OutOrStdout(), output.Sprintf("created %s\n", options.Service))
 			return nil
 		},
 	}

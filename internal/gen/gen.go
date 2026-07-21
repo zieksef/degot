@@ -72,6 +72,9 @@ func Generate(ctx context.Context, options Options) error {
 	}{
 		{"README.md", readmeContent(serviceName)},
 		{"AGENTS.md", ""},
+		// Claude Code reads CLAUDE.md, not AGENTS.md; importing via @AGENTS.md
+		// keeps both agent entry points on the same instructions.
+		{"CLAUDE.md", "@AGENTS.md\n"},
 		{".gitignore", gitignoreTemplate},
 		{filepath.Join("cmd", "main.go"), cmdMainContent()},
 	}

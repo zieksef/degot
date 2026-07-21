@@ -3,12 +3,14 @@ package command
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 
 	"github.com/spf13/cobra"
 
 	"github.com/zieksef/degot/internal/gen"
-	"github.com/zieksef/degot/internal/kitexgen"
+	"github.com/zieksef/degot/internal/output"
+	"github.com/zieksef/degot/internal/sync"
 )
 
 // usageTemplate is cobra's default usage template with the
@@ -49,11 +51,17 @@ Use "{{.CommandPath}} [command] --help" for more information about a command.{{e
 
 type Generator func(context.Context, gen.Options) error
 
-type KitexGenerator func(context.Context, kitexgen.Options) error
+type SyncLinters func(context.Context) error
+
+type SyncInstructions func(context.Context, sync.Options) error
+
+type SyncSkills func(context.Context, sync.Options) error
 
 type Deps struct {
-	Gen      Generator
-	KitexGen KitexGenerator
+	Gen              Generator
+	SyncLinters      SyncLinters
+	SyncInstructions SyncInstructions
+	SyncSkills       SyncSkills
 }
 
 // usageError marks errors caused by invalid invocation (bad flags, missing
@@ -70,13 +78,29 @@ func (e *usageError) Unwrap() error {
 	return e.err
 }
 
+// noArgs rejects positional arguments as usage errors (exit code 2), the
+// same convention as flag errors. Without it cobra silently ignores extras,
+// so e.g. `degot sync skills instructions` would sync only skills while
+// looking successful.
+func noArgs(cmd *cobra.Command, args []string) error {
+	if err := cobra.NoArgs(cmd, args); err != nil {
+		return &usageError{err: err}
+	}
+	return nil
+}
+
 func Run(ctx context.Context, args []string, stdout io.Writer, stderr io.Writer, deps Deps) int {
 	root := newRootCommand(deps)
 	root.SetArgs(args)
 	root.SetOut(stdout)
 	root.SetErr(stderr)
+	// Print errors ourselves so they carry the [degot] prefix instead of
+	// cobra's default "Error:" line. Usage text on flag/arg errors is left
+	// on, so those still print the command usage above our message.
+	root.SilenceErrors = true
 
 	if err := root.ExecuteContext(ctx); err != nil {
+		_, _ = fmt.Fprint(stderr, output.Sprintf("%s\n", err))
 		if _, ok := errors.AsType[*usageError](err); ok {
 			return 2
 		}
@@ -98,7 +122,7 @@ func newRootCommand(deps Deps) *cobra.Command {
 	})
 	root.SetUsageTemplate(usageTemplate)
 	root.AddCommand(newGenCommand(deps.Gen))
-	root.AddCommand(newKitexGenCommand(deps.KitexGen))
+	root.AddCommand(newSyncCommand(deps.SyncLinters, deps.SyncInstructions, deps.SyncSkills))
 
 	// The default help command and help flags only exist after these init
 	// calls; hiding them keeps -h/--help and `degot help` functional.

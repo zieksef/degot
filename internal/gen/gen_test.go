@@ -30,6 +30,7 @@ func TestGenerate(t *testing.T) {
 		".gitignore":                    gitignoreTemplate,
 		"README.md":                     "# orderservice\n",
 		"AGENTS.md":                     "",
+		"CLAUDE.md":                     "@AGENTS.md\n",
 		filepath.Join("cmd", "main.go"): "package main\n\nfunc main() {}\n",
 	}
 	for name, want := range files {

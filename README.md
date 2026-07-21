@@ -33,27 +33,20 @@ degot gen --service services/orderservice
 degot gen --service ~/work/orderservice --mod example.com/acme/orderservice
 ```
 
-## Generate kitex code from a remote IDL repository
+## Sync bundled config
 
-`kitexgen` wraps the [kitex](https://github.com/cloudwego/kitex) tool: it pulls
-the IDL git repository (cached in `~/.kitex/cache`, refreshed with `git pull`)
-and generates code into the current directory (`kitex_gen/`). The `kitex`
-binary must be installed:
+`degot sync` copies bundled files onto the machine and overwrites managed
+destinations; extra files already at the destinations are left untouched.
 
 ```sh
-go install github.com/cloudwego/kitex/tool/cmd/kitex@latest
+degot sync instructions   # agent instructions → ~/.claude, ~/.codex
+degot sync skills         # agent skills → ~/.claude, ~/.codex
+degot sync linters        # golangci-lint config → ~/.golangci.yml
+degot sync all            # all of the above
 ```
 
-Generate from a proto file inside a remote repository:
-
-```sh
-degot kitexgen --repo https://github.com/acme/idl.git --idl order/order.proto
-```
-
-`--idl` is the proto file path relative to the IDL repository root. The
-repository's default branch is used, and the go module name is inferred from
-go.mod. Re-running the same command refreshes `kitex_gen/` after the IDL
-changes.
+`--claude-only` / `--codex-only` limit the target for `instructions` and
+`skills` (mutually exclusive; not allowed with `all`).
 
 ## Generated structure
 
@@ -76,5 +69,6 @@ changes.
 ├── scripts/
 ├── .gitignore
 ├── AGENTS.md
+├── CLAUDE.md
 └── README.md
 ```
